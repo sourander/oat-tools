@@ -1,7 +1,6 @@
 import math
 import re
 
-from pathlib import Path
 from dataclasses import dataclass, field
 
 def extract_id(full_reference_line: str) -> str:

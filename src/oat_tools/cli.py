@@ -1,6 +1,8 @@
 import click
 
+from pathlib import Path
 from oat_tools.references import ReferenceCollection
+from oat_tools.wordcounter import print_file_word_counts
 
 @click.group()
 def cli():
@@ -50,7 +52,7 @@ def fix(files):
 
 @cli.command()
 @click.argument('files', nargs=-1, type=click.Path(exists=True), required=True)
-def wordcount(files):
+def wordcount(files: list[click.Path]):
     """
     Count words in Markdown files, excluding code blocks, footnotes, and URLs.
     
@@ -58,7 +60,7 @@ def wordcount(files):
         files: Markdown files to count words in.
     """
     click.echo("Counting words in files:")
-    for file in files:
-        click.echo(f"  - {file}")
-    # TODO: Implement word counting logic
-    click.echo("Word counting not yet implemented.")
+
+    file_paths = [Path(str(f)) for f in files]
+    
+    print_file_word_counts(file_paths)
