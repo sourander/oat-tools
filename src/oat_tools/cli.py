@@ -1,8 +1,8 @@
 import click
 
 from pathlib import Path
-from oat_tools.references import ReferenceCollection
 from oat_tools.wordcounter import print_file_word_counts
+from oat_tools.references import MarkdownReferenceManager, print_references_table, print_orphan_references
 
 @click.group()
 def cli():
@@ -27,11 +27,17 @@ def check(files):
     Args:
         files: Markdown files to check for reference issues.
     """
-    click.echo("Checking references in files:")
+    
+    # Create MarkdownReferenceManager instances for each file
+    reference_managers = []
     for file in files:
-        click.echo(f"  - {file}")
-    # TODO: Implement reference checking logic
-    click.echo("Reference checking not yet implemented.")
+        file_path = Path(str(file))
+        manager = MarkdownReferenceManager(file_path)
+        reference_managers.append(manager)
+    
+    # Print the references table
+    print_references_table(reference_managers)
+    print_orphan_references(reference_managers)
 
 @references.command()
 @click.argument('files', nargs=-1, type=click.Path(exists=True), required=True)

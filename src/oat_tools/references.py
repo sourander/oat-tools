@@ -2,6 +2,9 @@ import math
 import re
 
 from dataclasses import dataclass, field
+from pathlib import Path
+from tabulate import tabulate
+from collections import defaultdict
 
 def extract_id(full_reference_line: str) -> str:
         """
@@ -74,6 +77,20 @@ class Reference:
 
 
 @dataclass
+class MissingAppearanceRecord:
+    """
+    A class to record the appearance of a reference in a Markdown file.
+
+    Attributes:
+        reference_id (str): The ID of the reference.
+        first_appearance_pos (int): The character position where the reference first appears.
+        number_of_appearances (int): The number of times the reference appears in the file.
+    """
+    file_path: Path
+    reference_id: str
+    number_of_appearances: int
+
+@dataclass
 class ReferenceCollection:
     """
     A class that represents the Vancouver style references in a given Markdown file.
@@ -129,3 +146,139 @@ class ReferenceCollection:
         if only_appearing:
             references = [ref for ref in references if ref.number_of_appearances > 0]
         return references
+
+class MarkdownReferenceManager:
+    """
+    A class to manage Vancouver style references in a Markdown file.
+
+    Attributes:
+        file_path (Path): The path to the Markdown file.
+        reference_collection (ReferenceCollection): The collection of references in the file.
+        auto_load (bool): Whether to automatically load references from the file upon initialization.
+
+    Methods:
+        _load_references(): Load references from the Markdown file.
+
+    """
+    
+    def __init__(self, file_path: Path, auto_load: bool = True):
+        self.file_path = file_path
+        self.reference_collection = ReferenceCollection()
+
+        self.body_lines: list[str] = []
+
+        if auto_load:
+            self._load_references()
+            self._count_appearances()
+    
+    def _load_references(self):
+        """
+        Load references from the Markdown file. Move all non-reference lines to body_lines.
+        """
+
+        content = self.file_path.read_text(encoding='utf-8')
+        lines = content.splitlines()
+        for line in lines:
+            if is_reference_line(line):
+                self.reference_collection.add_reference(line.strip())
+            else:
+                self.body_lines.append(line)
+
+    def _count_appearances(self):
+        """
+        Count the appearances of each reference in the body text. The position is the byte offset in the file.
+        """
+        for ref in self.reference_collection.references:
+            ref.number_of_appearances = 0
+            ref.first_appearance_pos = None
+        
+        # Find the position of each reference in the body text
+        body_text = '\n'.join(self.body_lines)
+        for ref in self.reference_collection.references:
+            ref_id = ref.reference_id
+            pattern = re.compile(r'\[\^' + re.escape(ref_id) + r'\]')
+            matches = list(pattern.finditer(body_text))
+            
+            for match in matches:
+                ref.record_appearance(match.start())
+
+    def get_tabular_orphan_references(self):
+        """
+        Count [^refs] in the body text that are not in the reference collection so that we can print them later on using tabulate.
+        It should contain the (unexiasting) reference ID and the number of appearances.
+        Returns:
+            list: A list of lists, each containing the reference ID and the number of appearances.
+        """
+        body_text = '\n'.join(self.body_lines)
+        pattern = re.compile(r'\[\^([\w-]+)\]')
+        matches = list(pattern.finditer(body_text))
+        
+        # Let's use sets to track existing references
+        existing_references = {ref.reference_id for ref in self.reference_collection.references}
+        
+        orphan_references = defaultdict(int)
+        for match in matches:
+            ref_id = match.group(0)
+            if ref_id not in existing_references:
+                orphan_references[ref_id] += 1
+        # Convert to a list of lists for tabulation
+        orphan_references_list = [[ref_id, count] for ref_id, count in orphan_references.items()]
+        return orphan_references_list
+
+    def get_missing_appearance_record(self) -> list[MissingAppearanceRecord]:
+        """
+        Return the a line we can later on print using tabulate. 
+        It should contain the reference ID, first appearance position, and number of appearances (0)
+        """
+
+        return [
+            MissingAppearanceRecord(
+                file_path=self.file_path,
+                reference_id=ref.reference_id,
+                number_of_appearances=ref.number_of_appearances
+            )
+            for ref in self.reference_collection.get_ordered_by_pos(only_appearing=False) if ref.number_of_appearances == 0
+        ]
+
+
+def print_references_table(reference_managers: list[MarkdownReferenceManager]):
+    """
+    Print a table of references from multiple MarkdownReferenceManager instances.
+
+    Args:
+        reference_managers (list[MarkdownReferenceManager]): List of MarkdownReferenceManager instances.
+    """
+    appearance_records = []
+    for manager in reference_managers:
+        ar = manager.get_missing_appearance_record()
+        appearance_records.extend(ar)
+
+    if not appearance_records:
+        print("✅ No references found with missing in-text appearances.")
+        return
+    
+    print("")
+    print(tabulate(
+        appearance_records,
+        headers=appearance_records[0].__dataclass_fields__.keys(),
+    ))
+
+def print_orphan_references(reference_managers: list[MarkdownReferenceManager]):
+    """
+    Print a table of orphan references from multiple MarkdownReferenceManager instances.
+    Args:
+        reference_managers (list[MarkdownReferenceManager]): List of MarkdownReferenceManager instances.
+    """
+    orphan_references = []
+    for manager in reference_managers:
+        orphan_references.extend(manager.get_tabular_orphan_references())
+
+    if not orphan_references:
+        print("✅ No orphan references found.")
+        return
+    
+    print("")
+    print(tabulate(
+        orphan_references,
+        headers=["Orphan Ref", "Number of Appearances"],
+    ))

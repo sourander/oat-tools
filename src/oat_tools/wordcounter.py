@@ -46,4 +46,4 @@ def print_file_word_counts(file_paths: list[Path]) -> None:
         word_count = count_words(file_path)
         table.append([file_path, word_count])
     
-    print(tabulate(table, headers=["File", "Word Count"], tablefmt="grid"))
+    print(tabulate(table, headers=["File", "Word Count"]))
