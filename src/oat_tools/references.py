@@ -218,7 +218,7 @@ class MarkdownReferenceManager:
         
         orphan_references = defaultdict(int)
         for match in matches:
-            ref_id = match.group(0)
+            ref_id = match.group(1)
             if ref_id not in existing_references:
                 orphan_references[ref_id] += 1
         # Convert to a list of lists for tabulation
