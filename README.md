@@ -32,14 +32,21 @@ To detect unused references, order them by first appearance, and remove unused r
 # Abstract
 oat references [--fix] <FILE...>
 
-# Concrete example (check only)
+# Concrete example (check diary, another and all Markdown files in docs directory)
 oat references check diary.md another.md docs/**/*.md
 
-# Concrete example (fix)
+# Concrete example (fix the same files)
 oat references fix diary.md another.md docs/**/*.md
 ```
 
 Where `<FILE...>` is any number or Markdown files you want to process. You can use wildcards since your shell will expand them. Note that the `--fix` option will modify the files in place, so use it with caution. It is recommended to run the command without `--fix` first to see what changes will be made. Any unused references will be REMOVED, which is a destructive operation. It is recommended to run these commands after a Git commit, so you can easily revert the changes if needed, and can also review the changes using various diff tools.
+
+Terminology used in this tool:
+
+* **appearance**: Means that the `[^ref]` is used in the body text.
+* **reference**: Means that the `[^ref]:` is defined in the footnotes section.
+* **unused**: The `[^ref]:` is defined in the footnotes section, but has no appearance in the body text.
+* **orphan**: Opposite situation. The `[^ref]` is used in the body text without a corresponding `[^ref]:`.
 
 ### Word Count
 

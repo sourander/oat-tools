@@ -11,16 +11,18 @@ class TestCountWords:
     def test_basic_word_counting(self):
         """Test basic word counting functionality."""
         content = "This is a simple test with seven words."
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             f.write(content)
             f.flush()
             result = count_words(Path(f.name))
-            assert result == 8  # "This", "is", "a", "simple", "test", "with", "seven", "words"
+            assert (
+                result == 8
+            )  # "This", "is", "a", "simple", "test", "with", "seven", "words"
 
     def test_empty_file(self):
         """Test counting words in an empty file."""
         content = ""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             f.write(content)
             f.flush()
             result = count_words(Path(f.name))
@@ -29,7 +31,7 @@ class TestCountWords:
     def test_whitespace_only(self):
         """Test counting words in a file with only whitespace."""
         content = "   \n\t  \n  "
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             f.write(content)
             f.flush()
             result = count_words(Path(f.name))
@@ -48,12 +50,12 @@ class TestCountWords:
 
             And this is more regular text with seven words.
             """).strip()
-        
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             f.write(content)
             f.flush()
             result = count_words(Path(f.name))
-            # Should count: "This", "is", "regular", "text", "with", "five", "words", 
+            # Should count: "This", "is", "regular", "text", "with", "five", "words",
             # "And", "this", "is", "more", "regular", "text", "with", "seven", "words"
             assert result == 16
 
@@ -74,8 +76,8 @@ class TestCountWords:
 
             End with two words.
             """).strip()
-        
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             f.write(content)
             f.flush()
             result = count_words(Path(f.name))
@@ -92,8 +94,8 @@ class TestCountWords:
 
             Regular text continues here with more words.
             """).strip()
-        
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             f.write(content)
             f.flush()
             result = count_words(Path(f.name))
@@ -108,8 +110,8 @@ class TestCountWords:
             Also visit http://another-site.org and https://github.com/user/repo.
             This text has five normal words.
             """).strip()
-        
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             f.write(content)
             f.flush()
             result = count_words(Path(f.name))
@@ -132,8 +134,8 @@ class TestCountWords:
 
             > This is a blockquote with several words.
             """).strip()
-        
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             f.write(content)
             f.flush()
             result = count_words(Path(f.name))
@@ -147,10 +149,3 @@ class TestCountWords:
     #     test_file = Path("tests/data/testing.md")
     #     result = count_words(test_file)
     #     assert result == 6
-
-    # def test_empty_test_file(self):
-    #     """Test using the empty test data file."""
-    #     test_file = Path("tests/data/another.md")
-    #     result = count_words(test_file)
-    #     assert result == 0
-

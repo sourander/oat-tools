@@ -2,7 +2,12 @@ import click
 
 from pathlib import Path
 from oat_tools.wordcounter import print_file_word_counts
-from oat_tools.references import MarkdownReferenceManager, print_references_table, print_orphan_references
+from oat_tools.references import (
+    MarkdownFile,
+    print_references_table,
+    print_orphan_references,
+)
+
 
 @click.group()
 def cli():
@@ -11,6 +16,7 @@ def cli():
     """
     pass
 
+
 @cli.group()
 def references():
     """
@@ -18,55 +24,55 @@ def references():
     """
     pass
 
+
 @references.command()
-@click.argument('files', nargs=-1, type=click.Path(exists=True), required=True)
+@click.argument("files", nargs=-1, type=click.Path(exists=True), required=True)
 def check(files):
     """
     Check for unused references and show ordering by first appearance.
-    
+
     Args:
         files: Markdown files to check for reference issues.
     """
-    
+
     # Create MarkdownReferenceManager instances for each file
-    reference_managers = []
+    markdown_files = []
     for file in files:
         file_path = Path(str(file))
-        manager = MarkdownReferenceManager(file_path)
-        reference_managers.append(manager)
-    
+        md = MarkdownFile(file_path)
+        markdown_files.append(md)
+
     # Print the references table
-    print_references_table(reference_managers)
-    print_orphan_references(reference_managers)
+    print_references_table(markdown_files)
+    print_orphan_references(markdown_files)
+
 
 @references.command()
-@click.argument('files', nargs=-1, type=click.Path(exists=True), required=True)
+@click.argument("files", nargs=-1, type=click.Path(exists=True), required=True)
 def fix(files):
     """
-    Fix reference issues by removing unused references and reordering.
-    
+    Fix reference issues by removing unused references and reordering by first appearance.
+
     WARNING: This modifies files in place. Use with caution.
-    
+
     Args:
         files: Markdown files to fix reference issues in.
     """
-    click.echo("Fixing references in files:")
     for file in files:
-        click.echo(f"  - {file}")
-    # TODO: Implement reference fixing logic
-    click.echo("Reference fixing not yet implemented.")
+        file_path = Path(str(file))
+        md = MarkdownFile(file_path)
+        md.fix_references()
+
 
 @cli.command()
-@click.argument('files', nargs=-1, type=click.Path(exists=True), required=True)
+@click.argument("files", nargs=-1, type=click.Path(exists=True), required=True)
 def wordcount(files: list[click.Path]):
     """
     Count words in Markdown files, excluding code blocks, footnotes, and URLs.
-    
+
     Args:
         files: Markdown files to count words in.
     """
-    click.echo("Counting words in files:")
 
     file_paths = [Path(str(f)) for f in files]
-    
     print_file_word_counts(file_paths)
