@@ -28,7 +28,7 @@ To release a new version of OAT Tools, follow these steps:
    ```bash
    git add .
    git commit -m "Release version X.Y.Z"
-   git push origin main
+   git push
    ```
 
 5. **Create and push a version tag**
@@ -42,7 +42,8 @@ To release a new version of OAT Tools, follow these steps:
 
 6. **Monitor the release**
    - The GitHub Actions workflow will automatically build and publish the package to PyPI
-   - Check the [Actions tab](../../actions) in GitHub to ensure the release completed successfully
+   - Check the [Actions tab](https://github.com/sourander/oat-tools/actions) in GitHub to ensure the release completed successfully
+   - Note that you need to review and approve the workflow for it to run due to security settings!
    - Verify the new version appears on [PyPI](https://pypi.org/project/oat-tools/)
 
 ### Example Release Commands
