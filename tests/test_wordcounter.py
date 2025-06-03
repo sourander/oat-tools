@@ -106,8 +106,8 @@ class TestCountWords:
     def test_exclude_urls(self):
         """Test that URLs are excluded from word count."""
         content = dedent("""
-            Check out this website https://example.com for more info.
-            Also visit http://another-site.org and https://github.com/user/repo.
+            Check out [this website](https://example.com) for more info.
+            Also visit [site](http://another-site.org) and [this](https://github.com/user/repo).
             This text has five normal words.
             """).strip()
 
@@ -115,9 +115,7 @@ class TestCountWords:
             f.write(content)
             f.flush()
             result = count_words(Path(f.name))
-            # Should count: "Check", "out", "this", "website", "for", "more", "info",
-            # "Also", "visit", "and", "This", "text", "has", "five", "normal", "words"
-            assert result == 16
+            assert result == 14
 
     def test_markdown_headers_and_formatting(self):
         """Test that markdown headers and formatting are counted correctly."""
@@ -131,6 +129,9 @@ class TestCountWords:
             - List item one
             - List item two
             - List item three
+                         
+            !!! note
+                This is a note block with some words.
 
             > This is a blockquote with several words.
             """).strip()
@@ -139,10 +140,8 @@ class TestCountWords:
             f.write(content)
             f.flush()
             result = count_words(Path(f.name))
-            # Should count all visible text including headers, bold, italic, but excluding inline code formatting
-            # "Header", "One", "Header", "Two", "Header", "Three", "Bold", "text", "and", "italic", "text", "and", "inline", "code",
-            # "List", "item", "one", "List", "item", "two", "List", "item", "three", "This", "is", "a", "blockquote", "with", "several", "words"
-            assert result == 30
+            
+            assert result == 39
 
     # def test_existing_test_file(self):
     #     """Test using the existing test data file."""

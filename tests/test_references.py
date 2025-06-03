@@ -642,6 +642,40 @@ class TestMarkdownFile:
         finally:
             os.unlink(temp_file)
 
+    def test_markdown_file_with_meaningful_whitespace(self):
+        """Test that leading whitespace (e.g. admonition) are not removed."""
+        content = dedent("""
+            # Document
+
+            !!! note
+                This is a note admonition. [^admonition]
+                         
+            This is a body text without a reference.
+
+            [^admonition]: Admonition reference.
+            """).strip()
+        
+        temp_file = self.create_temp_markdown_file(content)
+
+        try:
+            md_file = MarkdownFile(temp_file)
+
+            # Verify admonition is preserved
+            assert "!!! note" in md_file.body_lines
+            assert "    This is a note admonition. [^admonition]" in md_file.body_lines
+
+            # Verify reference is loaded correctly
+            ref_ids = [
+                ref.reference_id for ref in md_file.reference_collection.references
+            ]
+            assert "admonition" in ref_ids
+
+            admonition_ref = md_file.reference_collection.get_reference_by_id("admonition")
+            assert admonition_ref.number_of_appearances == 1
+        finally:
+            os.unlink(temp_file)
+
+
     def test_markdown_file_with_existing_test_data(self):
         """Test MarkdownFile using the existing test data file."""
         test_file = Path("tests/data/testing.md")

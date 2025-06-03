@@ -1,6 +1,6 @@
 [project]
 name = "oat-tools"
-version = "1.0.0"
+version = "1.0.1"
 description = "OAT Tools is a CLI for managing Oppimispäiväkirja Markdown files."
 readme = "README.md"
 authors = [

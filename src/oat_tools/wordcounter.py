@@ -26,8 +26,8 @@ def count_words(file_path: Path) -> int:
     lines = content.splitlines()
     content = "\n".join(line for line in lines if not is_reference_line(line))
 
-    # Remove URLs
-    content = re.sub(r"https?://\S+", "", content)
+    # Remove Markdown URLs [text](http*)
+    content = re.sub(r"\[.*?\]\(http[^\)]+\)", "", content)
 
     # Split into words and count
     words = re.findall(r"\b\w+\b", content)
