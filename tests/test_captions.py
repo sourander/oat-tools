@@ -4,6 +4,7 @@ from oat_tools.captions import (
     Caption,
     CaptionFile,
     CaptionIssue,
+    MalformedCaption,
     is_caption_line,
     parse_caption,
 )
@@ -190,3 +191,68 @@ class TestCaptionFile:
         assert len(cf.captions) == 0
         assert cf.is_in_order() is True
         assert cf.get_caption_issues() == []
+
+
+class TestMalformedCaptions:
+    """Tests for malformed caption detection."""
+
+    def test_detect_single_malformed_caption(self, tmp_path):
+        test_file = tmp_path / "test.md"
+        test_file.write_text("**Kuva 1:**\n\nSome text here.\n")
+
+        cf = CaptionFile(test_file)
+        malformed = cf.get_malformed_captions()
+
+        assert len(malformed) == 1
+        assert malformed[0].line_number == 1
+        assert "**Kuva 1:**" in malformed[0].full_line
+
+    def test_detect_multiple_malformed_captions(self, tmp_path):
+        test_file = tmp_path / "test.md"
+        test_file.write_text(
+            "**Kuva 1:**\n\nSome text\n\n**Kuva 2:**\n\nMore text\n"
+        )
+
+        cf = CaptionFile(test_file)
+        malformed = cf.get_malformed_captions()
+
+        assert len(malformed) == 2
+        assert malformed[0].line_number == 1
+        assert malformed[1].line_number == 5
+
+    def test_no_malformed_captions_when_correct_format(self, tmp_path):
+        test_file = tmp_path / "test.md"
+        test_file.write_text(
+            "**Kuva 1**: First caption\n\n**Kuva 2**: Second caption\n"
+        )
+
+        cf = CaptionFile(test_file)
+        malformed = cf.get_malformed_captions()
+
+        assert len(malformed) == 0
+
+    def test_malformed_caption_with_leading_whitespace(self, tmp_path):
+        test_file = tmp_path / "test.md"
+        test_file.write_text("  **Kuva 1:**\n\nSome text\n")
+
+        cf = CaptionFile(test_file)
+        malformed = cf.get_malformed_captions()
+
+        assert len(malformed) == 1
+        assert malformed[0].line_number == 1
+
+    def test_mixed_correct_and_malformed_captions(self, tmp_path):
+        test_file = tmp_path / "test.md"
+        test_file.write_text(
+            "**Kuva 1**: Correct caption\n\n**Kuva 2:**\n\n**Kuva 3**: Another correct\n"
+        )
+
+        cf = CaptionFile(test_file)
+        malformed = cf.get_malformed_captions()
+
+        # Only one malformed caption
+        assert len(malformed) == 1
+        assert malformed[0].line_number == 3
+
+        # But only 2 valid captions are parsed
+        assert len(cf.captions) == 2
