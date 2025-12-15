@@ -30,6 +30,14 @@ Installed 1 executable: oat
 
 From now on, you can use the `oat` command in your terminal to run the tool.
 
+### Update
+
+You can update the tool using `uv`:
+
+```bash
+uv tool update oat-tools
+```
+
 ## Usage
 
 ### References
@@ -38,7 +46,7 @@ To detect unused references, order them by first appearance, and remove unused r
 
 ```bash
 # Abstract
-oat references [--fix] <FILE...>
+oat references [check|fix] <FILE...>
 
 # Concrete example (check diary, another and all Markdown files in docs directory)
 oat references check diary.md another.md docs/**/*.md
@@ -70,3 +78,29 @@ oat wordcount diary.md another.md docs/**/*.md
 
 Where `<FILE...>` is any number of Markdown files you want to process. Again, you can use wildcards.
 
+### Captions
+
+To check and fix caption numbering in Markdown files, you can use the following command:
+
+```bash
+# Abstract
+oat captions [check|fix] <FILE...>
+
+# Concrete example (check captions in all Markdown files in docs directory)
+oat captions check docs/**/*.md
+
+# Concrete example (fix caption numbering in the same files)
+oat captions fix docs/**/*.md
+```
+
+Where `<FILE...>` is any number of Markdown files you want to process. You can use wildcards since your shell will expand them.
+
+The captions feature ensures that image captions are numbered sequentially starting from 1. Captions must follow this exact format:
+
+```markdown
+**Kuva #**: Caption text goes here as a one-liner.
+```
+
+The `check` command will report any captions that are not in the correct numerical order, showing which files need attention. The `fix` command will renumber all captions sequentially, starting from 1, in the order they appear in the file.
+
+**Note**: The `fix` option will modify the files in place, so use it with caution. It is recommended to run the `check` command first to see what changes will be made. As with other commands, it's best to run these after a Git commit so you can easily review and revert changes if needed.

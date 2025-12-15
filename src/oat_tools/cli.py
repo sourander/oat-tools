@@ -7,6 +7,11 @@ from oat_tools.references import (
     print_references_table,
     print_orphan_references,
 )
+from oat_tools.captions import (
+    CaptionFile,
+    print_caption_status,
+    fix_caption_files,
+)
 
 
 @click.group()
@@ -25,9 +30,9 @@ def references():
     pass
 
 
-@references.command()
+@references.command("check")
 @click.argument("files", nargs=-1, type=click.Path(exists=True), required=True)
-def check(files):
+def references_check(files):
     """
     Check for unused references and show ordering by first appearance.
 
@@ -47,9 +52,9 @@ def check(files):
     print_orphan_references(markdown_files)
 
 
-@references.command()
+@references.command("fix")
 @click.argument("files", nargs=-1, type=click.Path(exists=True), required=True)
-def fix(files):
+def references_fix(files):
     """
     Fix reference issues by removing unused references and reordering by first appearance.
 
@@ -76,3 +81,53 @@ def wordcount(files: list[click.Path]):
 
     file_paths = [Path(str(f)) for f in files]
     print_file_word_counts(file_paths)
+
+
+@cli.group()
+def captions():
+    """
+    Manage caption numbering in Markdown files.
+    """
+    pass
+
+
+@captions.command("check")
+@click.argument("files", nargs=-1, type=click.Path(exists=True), required=True)
+def captions_check(files):
+    """
+    Check if captions are numbered correctly in Markdown files.
+
+    Captions should follow the format: **Kuva #**: Caption text
+    and be numbered sequentially starting from 1.
+
+    Args:
+        files: Markdown files to check for caption issues.
+    """
+    caption_files = []
+    for file in files:
+        file_path = Path(str(file))
+        cf = CaptionFile(file_path)
+        caption_files.append(cf)
+
+    print_caption_status(caption_files)
+
+
+@captions.command("fix")
+@click.argument("files", nargs=-1, type=click.Path(exists=True), required=True)
+def captions_fix(files):
+    """
+    Fix caption numbering in Markdown files.
+
+    Renumbers captions sequentially starting from 1.
+    WARNING: This modifies files in place. Use with caution.
+
+    Args:
+        files: Markdown files to fix caption numbering in.
+    """
+    caption_files = []
+    for file in files:
+        file_path = Path(str(file))
+        cf = CaptionFile(file_path)
+        caption_files.append(cf)
+
+    fix_caption_files(caption_files)
