@@ -14,13 +14,13 @@ class TestIsCaptionLine:
     """Tests for the is_caption_line function."""
 
     def test_valid_caption_line(self):
-        assert is_caption_line("**Kuva 1**: Some caption text") is True
+        assert is_caption_line("**Kuva 1:** Some caption text") is True
 
     def test_valid_caption_line_with_number(self):
-        assert is_caption_line("**Kuva 42**: Another caption") is True
+        assert is_caption_line("**Kuva 42:** Another caption") is True
 
     def test_caption_line_with_leading_whitespace(self):
-        assert is_caption_line("  **Kuva 1**: Caption with whitespace") is True
+        assert is_caption_line("  **Kuva 1:** Caption with whitespace") is True
 
     def test_not_caption_line_plain_text(self):
         assert is_caption_line("This is just regular text") is False
@@ -39,14 +39,14 @@ class TestParseCaption:
     """Tests for the parse_caption function."""
 
     def test_parse_valid_caption(self):
-        caption = parse_caption("**Kuva 1**: Test caption", 0)
+        caption = parse_caption("**Kuva 1:** Test caption", 0)
         assert caption is not None
         assert caption.current_number == 1
         assert caption.text == "Test caption"
         assert caption.line_number == 0
 
     def test_parse_caption_with_larger_number(self):
-        caption = parse_caption("**Kuva 123**: Large number caption", 5)
+        caption = parse_caption("**Kuva 123:** Large number caption", 5)
         assert caption is not None
         assert caption.current_number == 123
         assert caption.text == "Large number caption"
@@ -57,7 +57,7 @@ class TestParseCaption:
         assert caption is None
 
     def test_parse_caption_with_special_characters(self):
-        caption = parse_caption("**Kuva 1**: Caption with (special) characters!", 0)
+        caption = parse_caption("**Kuva 1:** Caption with (special) characters!", 0)
         assert caption is not None
         assert caption.text == "Caption with (special) characters!"
 
@@ -70,20 +70,20 @@ class TestCaption:
             line_number=0,
             current_number=5,
             text="Some caption",
-            full_line="**Kuva 5**: Some caption",
+            full_line="**Kuva 5:** Some caption",
         )
-        assert caption.get_renumbered_line(1) == "**Kuva 1**: Some caption"
+        assert caption.get_renumbered_line(1) == "**Kuva 1:** Some caption"
 
     def test_get_renumbered_line_preserves_text(self):
         caption = Caption(
             line_number=0,
             current_number=10,
             text="Complex caption with numbers 123",
-            full_line="**Kuva 10**: Complex caption with numbers 123",
+            full_line="**Kuva 10:** Complex caption with numbers 123",
         )
         assert (
             caption.get_renumbered_line(2)
-            == "**Kuva 2**: Complex caption with numbers 123"
+            == "**Kuva 2:** Complex caption with numbers 123"
         )
 
 
@@ -94,7 +94,7 @@ class TestCaptionFile:
         # Create a test file
         test_file = tmp_path / "test.md"
         test_file.write_text(
-            "# Header\n\n**Kuva 1**: First caption\n\nSome text\n\n**Kuva 2**: Second caption\n"
+            "# Header\n\n**Kuva 1:** First caption\n\nSome text\n\n**Kuva 2:** Second caption\n"
         )
 
         cf = CaptionFile(test_file)
@@ -104,21 +104,21 @@ class TestCaptionFile:
 
     def test_captions_in_order(self, tmp_path):
         test_file = tmp_path / "test.md"
-        test_file.write_text("**Kuva 1**: First\n**Kuva 2**: Second\n**Kuva 3**: Third\n")
+        test_file.write_text("**Kuva 1:** First\n**Kuva 2:** Second\n**Kuva 3:** Third\n")
 
         cf = CaptionFile(test_file)
         assert cf.is_in_order() is True
 
     def test_captions_out_of_order(self, tmp_path):
         test_file = tmp_path / "test.md"
-        test_file.write_text("**Kuva 2**: First\n**Kuva 1**: Second\n**Kuva 5**: Third\n")
+        test_file.write_text("**Kuva 2:** First\n**Kuva 1:** Second\n**Kuva 5:** Third\n")
 
         cf = CaptionFile(test_file)
         assert cf.is_in_order() is False
 
     def test_get_caption_issues(self, tmp_path):
         test_file = tmp_path / "test.md"
-        test_file.write_text("**Kuva 3**: Should be 1\n**Kuva 5**: Should be 2\n")
+        test_file.write_text("**Kuva 3:** Should be 1\n**Kuva 5:** Should be 2\n")
 
         cf = CaptionFile(test_file)
         issues = cf.get_caption_issues()
@@ -131,7 +131,7 @@ class TestCaptionFile:
 
     def test_no_caption_issues_when_correct(self, tmp_path):
         test_file = tmp_path / "test.md"
-        test_file.write_text("**Kuva 1**: First\n**Kuva 2**: Second\n")
+        test_file.write_text("**Kuva 1:** First\n**Kuva 2:** Second\n")
 
         cf = CaptionFile(test_file)
         issues = cf.get_caption_issues()
@@ -141,7 +141,7 @@ class TestCaptionFile:
     def test_fix_captions(self, tmp_path):
         test_file = tmp_path / "test.md"
         test_file.write_text(
-            "# Header\n\n**Kuva 5**: First caption\n\nSome text\n\n**Kuva 10**: Second caption\n"
+            "# Header\n\n**Kuva 5:** First caption\n\nSome text\n\n**Kuva 10:** Second caption\n"
         )
 
         cf = CaptionFile(test_file)
@@ -151,14 +151,14 @@ class TestCaptionFile:
 
         # Read the file again and verify
         content = test_file.read_text()
-        assert "**Kuva 1**: First caption" in content
-        assert "**Kuva 2**: Second caption" in content
-        assert "**Kuva 5**" not in content
-        assert "**Kuva 10**" not in content
+        assert "**Kuva 1:** First caption" in content
+        assert "**Kuva 2:** Second caption" in content
+        assert "**Kuva 5:**" not in content
+        assert "**Kuva 10:**" not in content
 
     def test_fix_captions_no_changes_needed(self, tmp_path):
         test_file = tmp_path / "test.md"
-        original_content = "**Kuva 1**: First\n**Kuva 2**: Second\n"
+        original_content = "**Kuva 1:** First\n**Kuva 2:** Second\n"
         test_file.write_text(original_content)
 
         cf = CaptionFile(test_file)
@@ -170,7 +170,7 @@ class TestCaptionFile:
     def test_fix_captions_preserves_other_content(self, tmp_path):
         test_file = tmp_path / "test.md"
         test_file.write_text(
-            "# Title\n\nParagraph text here.\n\n**Kuva 99**: Caption\n\n## Another section\n\nMore text.\n"
+            "# Title\n\nParagraph text here.\n\n**Kuva 99:** Caption\n\n## Another section\n\nMore text.\n"
         )
 
         cf = CaptionFile(test_file)
@@ -179,7 +179,7 @@ class TestCaptionFile:
         content = test_file.read_text()
         assert "# Title" in content
         assert "Paragraph text here." in content
-        assert "**Kuva 1**: Caption" in content
+        assert "**Kuva 1:** Caption" in content
         assert "## Another section" in content
         assert "More text." in content
 
@@ -198,19 +198,19 @@ class TestMalformedCaptions:
 
     def test_detect_single_malformed_caption(self, tmp_path):
         test_file = tmp_path / "test.md"
-        test_file.write_text("**Kuva 1:**\n\nSome text here.\n")
+        test_file.write_text("**Kuva 1**: Some text here.\n")
 
         cf = CaptionFile(test_file)
         malformed = cf.get_malformed_captions()
 
         assert len(malformed) == 1
         assert malformed[0].line_number == 1
-        assert "**Kuva 1:**" in malformed[0].full_line
+        assert "**Kuva 1**:" in malformed[0].full_line
 
     def test_detect_multiple_malformed_captions(self, tmp_path):
         test_file = tmp_path / "test.md"
         test_file.write_text(
-            "**Kuva 1:**\n\nSome text\n\n**Kuva 2:**\n\nMore text\n"
+            "**Kuva 1**: Some text\n\n**Kuva 2**: More text\n"
         )
 
         cf = CaptionFile(test_file)
@@ -218,12 +218,12 @@ class TestMalformedCaptions:
 
         assert len(malformed) == 2
         assert malformed[0].line_number == 1
-        assert malformed[1].line_number == 5
+        assert malformed[1].line_number == 3
 
     def test_no_malformed_captions_when_correct_format(self, tmp_path):
         test_file = tmp_path / "test.md"
         test_file.write_text(
-            "**Kuva 1**: First caption\n\n**Kuva 2**: Second caption\n"
+            "**Kuva 1:** First caption\n\n**Kuva 2:** Second caption\n"
         )
 
         cf = CaptionFile(test_file)
@@ -233,7 +233,7 @@ class TestMalformedCaptions:
 
     def test_malformed_caption_with_leading_whitespace(self, tmp_path):
         test_file = tmp_path / "test.md"
-        test_file.write_text("  **Kuva 1:**\n\nSome text\n")
+        test_file.write_text("  **Kuva 1**: Some text\n")
 
         cf = CaptionFile(test_file)
         malformed = cf.get_malformed_captions()
@@ -244,7 +244,7 @@ class TestMalformedCaptions:
     def test_mixed_correct_and_malformed_captions(self, tmp_path):
         test_file = tmp_path / "test.md"
         test_file.write_text(
-            "**Kuva 1**: Correct caption\n\n**Kuva 2:**\n\n**Kuva 3**: Another correct\n"
+            "**Kuva 1:** Correct caption\n\n**Kuva 2**: Malformed\n\n**Kuva 3:** Another correct\n"
         )
 
         cf = CaptionFile(test_file)
@@ -256,3 +256,119 @@ class TestMalformedCaptions:
 
         # But only 2 valid captions are parsed
         assert len(cf.captions) == 2
+
+    def test_fix_single_malformed_caption(self, tmp_path):
+        test_file = tmp_path / "test.md"
+        test_file.write_text("**Kuva 1**: Some text here.\n")
+
+        cf = CaptionFile(test_file)
+        fixed_count = cf.fix_malformed_captions()
+
+        assert fixed_count == 1
+
+        # Verify the file was fixed
+        content = test_file.read_text()
+        assert "**Kuva 1:** Some text here." in content
+        assert "**Kuva 1**:" not in content
+
+    def test_fix_multiple_malformed_captions(self, tmp_path):
+        test_file = tmp_path / "test.md"
+        test_file.write_text(
+            "# Header\n\n**Kuva 1**: First caption\n\nSome text\n\n**Kuva 2**: Second caption\n"
+        )
+
+        cf = CaptionFile(test_file)
+        fixed_count = cf.fix_malformed_captions()
+
+        assert fixed_count == 2
+
+        # Verify the file was fixed
+        content = test_file.read_text()
+        assert "**Kuva 1:** First caption" in content
+        assert "**Kuva 2:** Second caption" in content
+        assert "**Kuva 1**:" not in content
+        assert "**Kuva 2**:" not in content
+
+    def test_fix_malformed_no_changes_needed(self, tmp_path):
+        test_file = tmp_path / "test.md"
+        original_content = "**Kuva 1:** Correct caption\n"
+        test_file.write_text(original_content)
+
+        cf = CaptionFile(test_file)
+        fixed_count = cf.fix_malformed_captions()
+
+        assert fixed_count == 0
+        assert test_file.read_text() == original_content
+
+    def test_fix_malformed_preserves_other_content(self, tmp_path):
+        test_file = tmp_path / "test.md"
+        test_file.write_text(
+            "# Title\n\nParagraph text here.\n\n**Kuva 1**: Caption\n\n## Another section\n\nMore text.\n"
+        )
+
+        cf = CaptionFile(test_file)
+        cf.fix_malformed_captions()
+
+        content = test_file.read_text()
+        assert "# Title" in content
+        assert "Paragraph text here." in content
+        assert "**Kuva 1:** Caption" in content
+        assert "## Another section" in content
+        assert "More text." in content
+
+    def test_fix_malformed_then_renumber(self, tmp_path):
+        """Test that fixing malformed captions then renumbering works correctly."""
+        test_file = tmp_path / "test.md"
+        test_file.write_text(
+            "**Kuva 5**: First caption\n\n**Kuva 10**: Second caption\n"
+        )
+
+        cf = CaptionFile(test_file)
+        
+        # Fix malformed captions first
+        malformed_count = cf.fix_malformed_captions()
+        assert malformed_count == 2
+        
+        # Now fix numbering
+        numbering_count = cf.fix_captions()
+        assert numbering_count == 2
+        
+        # Verify final result
+        content = test_file.read_text()
+        assert "**Kuva 1:** First caption" in content
+        assert "**Kuva 2:** Second caption" in content
+
+    def test_fix_mixed_malformed_and_valid_captions_renumbers_from_one(self, tmp_path):
+        """Test that fixing a mix of malformed and valid captions renumbers starting from 1.
+        
+        Regression test for bug where captions were renumbered starting from wrong index
+        due to _load_captions appending to existing list instead of clearing it first.
+        """
+        test_file = tmp_path / "test.md"
+        test_file.write_text(
+            "**Kuva 1:** Caption text goes here as a one-liner.\n\n"
+            "**Kuva 2**: Colon on wrong side of bold.\n\n"
+            "**Kuva 3:** A way too long caption text.\n\n"
+            "**Kuva 3:** Problematic duplicate caption number. Yes.\n\n"
+            "**Kuva 42:** Another problematic caption.\n"
+        )
+
+        cf = CaptionFile(test_file)
+        
+        # Fix malformed captions first
+        malformed_count = cf.fix_malformed_captions()
+        assert malformed_count == 1  # Only Kuva 2 is malformed
+        
+        # Now fix numbering
+        numbering_count = cf.fix_captions()
+        
+        # Verify final result - should start from 1, not 5
+        content = test_file.read_text()
+        assert "**Kuva 1:** Caption text goes here as a one-liner." in content
+        assert "**Kuva 2:** Colon on wrong side of bold." in content
+        assert "**Kuva 3:** A way too long caption text." in content
+        assert "**Kuva 4:** Problematic duplicate caption number. Yes." in content
+        assert "**Kuva 5:** Another problematic caption." in content
+        
+        # Make sure old numbers are gone
+        assert "**Kuva 42:**" not in content

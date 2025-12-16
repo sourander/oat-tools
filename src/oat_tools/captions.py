@@ -5,11 +5,11 @@ from pathlib import Path
 from tabulate import tabulate
 
 
-# Pattern to match captions in the format: **Kuva #**: Some caption text
-CAPTION_PATTERN = re.compile(r"\*\*Kuva (\d+)\*\*: (.+)")
+# Pattern to match captions in the format: **Kuva #:** Some caption text
+CAPTION_PATTERN = re.compile(r"\*\*Kuva (\d+):\*\* (.+)")
 
-# Pattern to match malformed captions where colon is inside the bolding
-MALFORMED_CAPTION_PATTERN = re.compile(r"\*\*Kuva (\d+):\*\*")
+# Pattern to match malformed captions where colon is outside the bolding
+MALFORMED_CAPTION_PATTERN = re.compile(r"\*\*Kuva (\d+)\*\*:")
 
 
 @dataclass
@@ -33,7 +33,7 @@ class Caption:
         """
         Return the caption line with a new number.
         """
-        return f"**Kuva {new_number}**: {self.text}"
+        return f"**Kuva {new_number}:** {self.text}"
 
 
 @dataclass
@@ -59,7 +59,7 @@ class CaptionIssue:
 @dataclass
 class MalformedCaption:
     """
-    A class to record a malformed caption (colon inside bolding).
+    A class to record a malformed caption (colon outside bolding).
 
     Attributes:
         file_path (Path): The path to the file.
@@ -74,7 +74,7 @@ class MalformedCaption:
 
 def is_caption_line(line: str) -> bool:
     """
-    Check if a line is a caption line in the format **Kuva #**: text.
+    Check if a line is a caption line in the format **Kuva #:** text.
 
     Args:
         line (str): The line to check.
@@ -129,6 +129,8 @@ class CaptionFile:
         """
         Load captions from the Markdown file.
         """
+        self.captions = []  # Clear existing captions before reloading
+        
         content = self.file_path.read_text(encoding="utf-8")
         self.lines = content.splitlines()
 
@@ -170,7 +172,7 @@ class CaptionFile:
 
     def get_malformed_captions(self) -> list[MalformedCaption]:
         """
-        Get a list of malformed captions where the colon is inside the bolding.
+        Get a list of malformed captions where the colon is outside the bolding.
 
         Returns:
             list[MalformedCaption]: List of malformed captions found in the file.
@@ -208,6 +210,29 @@ class CaptionFile:
                 )
 
         return "\n".join(fixed_lines)
+
+    def fix_malformed_captions(self) -> int:
+        """
+        Fix malformed captions by moving the colon inside the bolding.
+        
+        Converts **Kuva #**: text to **Kuva #:** text
+
+        Returns:
+            int: The number of malformed captions that were fixed.
+        """
+        malformed = self.get_malformed_captions()
+        if not malformed:
+            return 0
+
+        # Use regex to replace all malformed patterns
+        content = self.file_path.read_text(encoding="utf-8")
+        fixed_content = MALFORMED_CAPTION_PATTERN.sub(r"**Kuva \1:**", content)
+        self.file_path.write_text(fixed_content, encoding="utf-8")
+        
+        # Reload captions after fixing
+        self._load_captions()
+        
+        return len(malformed)
 
     def fix_captions(self) -> int:
         """
@@ -251,13 +276,12 @@ def print_caption_status(caption_files: list[CaptionFile]):
 
     # Print malformed caption warnings first
     if all_malformed:
-        print("⚠️  WARNING: Malformed captions detected (colon inside bolding):")
+        print("⚠️  WARNING: Malformed captions detected (colon outside bolding):")
         print(
             tabulate(
                 [
                     {
-                        "file_path": mal.file_path,
-                        "line": mal.line_number,
+                        "file_path:line": f"{mal.file_path}:{mal.line_number}",
                         "content": mal.full_line,
                     }
                     for mal in all_malformed
@@ -265,10 +289,6 @@ def print_caption_status(caption_files: list[CaptionFile]):
                 headers="keys",
             )
         )
-        print("")
-        print("These captions will be ignored by auto-numbering.")
-        print("Correct format: **Kuva #**: Caption text")
-        print("Wrong format:   **Kuva #:**")
         print("")
 
     # Print files that are OK
@@ -278,15 +298,13 @@ def print_caption_status(caption_files: list[CaptionFile]):
     # Print issues
     if all_issues:
         print("")
-        print("Caption numbering issues:")
+        print("⚠️  WARNING: Caption numbering issues:")
         print(
             tabulate(
                 [
                     {
-                        "file_path": issue.file_path,
-                        "line": issue.line_number,
+                        "file_path:line": f"{issue.file_path}:{issue.line_number}",
                         "current": issue.current_number,
-                        "expected": issue.expected_number,
                         "caption": issue.caption_text,
                     }
                     for issue in all_issues
@@ -304,13 +322,24 @@ def print_caption_status(caption_files: list[CaptionFile]):
 def fix_caption_files(caption_files: list[CaptionFile]):
     """
     Fix caption numbering in all files and print the results.
+    
+    This function first fixes malformed captions (colon outside bolding),
+    then renumbers captions sequentially.
 
     Args:
         caption_files (list[CaptionFile]): List of CaptionFile instances.
     """
     for cf in caption_files:
+        # First, fix malformed captions
+        malformed_count = cf.fix_malformed_captions()
+        
+        # Then, fix numbering
         fixed_count = cf.fix_captions()
+        
+        # Report results
+        if malformed_count > 0:
+            print(f"🔧 {cf.file_path}: Fixed {malformed_count} malformed caption(s)")
+        
         if fixed_count > 0:
             print(f"🔧 {cf.file_path}: Fixed {fixed_count} caption(s)")
-        else:
-            print(f"✅ {cf.file_path}: No changes needed")
+

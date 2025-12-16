@@ -97,7 +97,7 @@ def captions_check(files):
     """
     Check if captions are numbered correctly in Markdown files.
 
-    Captions should follow the format: **Kuva #**: Caption text
+    Captions should follow the format: **Kuva #:** Caption text
     and be numbered sequentially starting from 1.
 
     Args:

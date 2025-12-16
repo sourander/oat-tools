@@ -40,6 +40,18 @@ uv tool update oat-tools
 
 ## Usage
 
+### Autocompletion
+
+OAT Tools supports shell autocompletion for `bash`, `zsh` and `fish`, as this support is provided by the underlying `click` library. To enable autocompletion, run the following command for your shell, or add it to your shell configuration file:
+
+```bash
+# For zsh (or add to ~/.zshrc)
+eval "$(_OAT_COMPLETE=zsh_source oat)"
+
+# For bash (or add to ~/.bashrc)
+eval "$(_OAT_COMPLETE=bash_source oat)"
+```
+
 ### References
 
 To detect unused references, order them by first appearance, and remove unused references, you can use the following command:
@@ -97,10 +109,26 @@ Where `<FILE...>` is any number of Markdown files you want to process. You can u
 
 The captions feature ensures that image captions are numbered sequentially starting from 1. Captions must follow this exact format:
 
-```markdown
-**Kuva #**: Caption text goes here as a one-liner.
+```plaintext
+**Kuva #:** Caption text goes here as a one-liner.
 ```
 
-The `check` command will report any captions that are not in the correct numerical order, showing which files need attention. The `fix` command will renumber all captions sequentially, starting from 1, in the order they appear in the file.
+The `check` command will report any captions that are not in the correct numerical order, showing which files need attention. The `fix` command will renumber all captions sequentially, starting from 1, in the order they appear in the file. It will also report a common caption formatting issue where the colon is placed outside the bolding, e.g., `**Kuva 1**: Caption text...`. Example outputs:
+
+```bash-console
+$ oat captions check TESTER.md
+⚠️  WARNING: Malformed captions detected (colon outside bolding):
+file_path:line    content
+----------------  ----------------------------------------
+TESTER.md:3       **Kuva 2**: Colon on wrong side of bold.
+
+
+⚠️  WARNING: Caption numbering issues:
+file_path:line      current  caption
+----------------  ---------  -----------------------------------------------------
+TESTER.md:5               3  I am wrong because 2 is malformed. Also, the trunc...
+TESTER.md:11              4  Duplicate part B.
+TESTER.md:13             42  Off-by-thirtysomething index
+```
 
 **Note**: The `fix` option will modify the files in place, so use it with caution. It is recommended to run the `check` command first to see what changes will be made. As with other commands, it's best to run these after a Git commit so you can easily review and revert changes if needed.
